@@ -1,0 +1,362 @@
+{
+  "name": "Techwache v1 Supabase",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "cb77b768-b2ff-4c44-89d8-a6a6e68edccc",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        352,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "company"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        608,
+        16
+      ],
+      "id": "fbff599c-bffe-4fb5-97c2-55f901fb104c",
+      "name": "Get all companies",
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": " https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-5"
+            },
+            {
+              "name": "input",
+              "value": "=SYSTEM\nYou are a competitive intelligence analyst. Produce a short bi-weekly brief on {{ $json.name }}  as simple HTML suitable for email.\n\nAudience: busy SaaS PM/PMM/Founders in Germany who read multiple briefs in one email → keep it short, scannable, impactful.\nLanguage: English only.\nDo the research now. Return filled content, not a template.\nNo internal reasoning. Output HTML only (no Markdown, no code fences).\n\nRules\n\t•\tLength: Max 3–6 bullets. If no relevant updates: show a single line “No material changes in this period.”\n\t•\tRecency: Focus on the last 14 days; extend to 30 only if needed.\n\t•\tAvoid repetition: Do not repeat items from the previous brief unless there is a new development/follow-up.\n\t•\tEvidence-only: Every bullet must be supported by at least one URL. Provide an exhaustive source list at the bottom (titles + dates).\n\t•\tScope (broad): Company sites (blog/changelog/docs/pricing/status/careers/roadmap/GitHub/marketplace), reputable media, DACH/EU SaaS press, Crunchbase/funding DBs, and social/public chatter (Reddit, Hacker News, LinkedIn, X/Twitter by company/execs), plus dated podcasts/videos and conference agendas.\n\t•\tWhat to include: product/platform changes, pricing/packaging, GTM/partnerships/market launches, notable customer wins/losses, exec hires/layoffs, security/compliance/legal, funding/M&A, material incidents.\n\t•\tWhat to exclude: generic thought leadership/SEO fluff/undated hype.\n\nPrevious brief (do not repeat unless there’s a new development):\n\"\"\n\n⸻\n\nOUTPUT (HTML only; keep it minimal & inline-safe)\nReturn only this HTML structure, fully filled with real content:\n\n<div class=\"company-brief\" style=\"font-family: Arial, sans-serif; line-height:1.5;\">\n  <h3 style=\"margin:0 0 6px 0;\">{{ $json.name }} </h3>\n  <p style=\"margin:0 0 8px 0;\"><strong>Verdict:</strong> ⟨1 concise sentence with the key takeaway for this period⟩</p>\n\n  <!-- If there are relevant updates, show this list; otherwise replace with a single <p>No material changes in this period.</p> -->\n  <ul style=\"margin:0 0 8px 18px; padding:0;\">\n    <li>⟨Bullet 1: short fact + why it matters for competitors⟩</li>\n    <li>⟨Bullet 2: short fact + why it matters⟩</li>\n    <li>⟨Bullet 3: short fact + why it matters⟩</li>\n    <!-- Optional 4th only if truly necessary -->\n  </ul>\n\n\n  <!-- OPTIONAL: only include this block if there is real follow-up to previously reported items -->\n  <!-- Ongoing developments -->\n  <!-- If empty, omit this entire <div>. -->\n\n\n  <div class=\"ongoing\" style=\"margin:8px 0 0 0;\">\n    <p style=\"margin:0 0 6px 0;\"><em>Ongoing developments:</em></p>\n    <ul style=\"margin:0 0 8px 18px; padding:0;\">\n      <li>⟨Short follow-up item 1 with what changed since last brief⟩</li>\n      <li>⟨Short follow-up item 2 (optional)⟩</li>\n    </ul>\n  </div>\n\n  <p style=\"margin:8px 0 4px 0;\"><strong>Sources:</strong></p>\n  <ul style=\"margin:0 0 0 18px; padding:0;\">\n    <!-- Include ALL URLs used (company + external + social/forum), each with title and date -->\n    <li><a href=\"⟨URL⟩\">⟨Title⟩</a> – ⟨YYYY-MM-DD⟩</li>\n    <li><a href=\"⟨URL⟩\">⟨Title⟩</a> – ⟨YYYY-MM-DD⟩</li>\n  </ul>\n</div>"
+            },
+            {
+              "name": "tools[0].type",
+              "value": "web_search"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        16
+      ],
+      "id": "9a9c0c90-0899-45a2-8494-37843b075323",
+      "name": "Research per company",
+      "credentials": {
+        "openAiApi": {
+          "id": "2K5e7Mdf6gxFJAE7",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "brief_company_snippet",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "company_id",
+              "fieldValue": "={{ $('Get all companies').item.json.id }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ ($json.output || [])\n    .find(o => o?.content?.[0]?.text)?.content?.[0]?.text ?? '' }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "=2025-09-05"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        16
+      ],
+      "id": "d99867f7-851c-47ce-8410-e0a1adf4fe61",
+      "name": "Store snippet",
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://myyvsyaodmxhzmddxgip.supabase.co/rest/v1/rpc/get_merged_snippets_for_customer_and_date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "p_customer_id",
+              "value": "={{ $json.customer_id }}"
+            },
+            {
+              "name": "p_day",
+              "value": "2025-09-05"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        256
+      ],
+      "id": "8e9d4531-3ebb-40bc-9681-cd0b0f67425b",
+      "name": "Get merged snippets per customer",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://myyvsyaodmxhzmddxgip.supabase.co/rest/v1/rpc/get_distinct_customer_ids",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        256
+      ],
+      "id": "70cbbb98-826e-4299-a1bc-64eac6cf410f",
+      "name": "Get all customers",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "brief_full_customer",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "customer_id",
+              "fieldValue": "={{ $json.customer_id }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $json.day }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.merged_content }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        256
+      ],
+      "id": "31db51c7-f9da-4f92-af96-846f1d771c78",
+      "name": "Store full brief",
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://myyvsyaodmxhzmddxgip.supabase.co/rest/v1/rpc/get_customer_briefs_on_date",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "p_day",
+              "value": "2025-09-05"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        480
+      ],
+      "id": "fc7fcf41-202e-436f-90cd-45afcd6f6824",
+      "name": "Get customer briefs on date",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "FKDLfuabhIVoSxKc",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendHTML": true,
+        "subject": "Techwache",
+        "htmlContent": "=<!doctype html>\n<html lang=\"de\">\n  <body style=\"margin:0;padding:0;background:#f6f7fb\">\n    <div style=\"padding:24px;\">\n      <div style=\"max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;\">\n        <div style=\"padding:24px 28px;font:700 18px/1.3 system-ui\">Techwache – Weekly Competitive Brief</div>\n        <div style=\"padding:0 28px 16px;color:#4a4a4a;font:14px/1.6 system-ui\">\n          <div style=\"white-space:pre-wrap;word-break:break-word;\">\n            {{$json.customer_brief}}\n          </div>\n        </div>\n        <div style=\"padding:20px 28px 28px;color:#6b7280;font:12px/1.6 system-ui;border-top:1px solid #eee\"><a href=\"/unsubscribe\">Abmelden</a>\n        </div>\n      </div>\n    </div>\n  </body>\n</html>\n",
+        "sender": "soerenweber.pm@gmail.com",
+        "receipients": "={{ $json.customer_email }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.sendInBlue",
+      "typeVersion": 1,
+      "position": [
+        832,
+        480
+      ],
+      "id": "3c22d9ad-8af3-4903-af41-61cc1739d1d0",
+      "name": "Send a transactional email",
+      "credentials": {
+        "sendInBlueApi": {
+          "id": "GcvrxgV7FuBH5FVG",
+          "name": "Brevo account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get customer briefs on date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all companies": {
+      "main": [
+        [
+          {
+            "node": "Research per company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research per company": {
+      "main": [
+        [
+          {
+            "node": "Store snippet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store snippet": {
+      "main": [
+        []
+      ]
+    },
+    "Get merged snippets per customer": {
+      "main": [
+        [
+          {
+            "node": "Store full brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all customers": {
+      "main": [
+        [
+          {
+            "node": "Get merged snippets per customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get customer briefs on date": {
+      "main": [
+        [
+          {
+            "node": "Send a transactional email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "753877ed-f03e-4930-adc8-dd5cb60ee8c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ec0897392b6736def45a7090b53aa8555a94ddf76eeb63571f31c413d5066a20"
+  },
+  "id": "aPHWb9giETmYyrgW",
+  "tags": []
+}
