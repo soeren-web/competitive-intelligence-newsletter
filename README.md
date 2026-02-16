@@ -1,6 +1,3 @@
-Here’s a stronger, “drop-in” `README.md` you can use for this repo (it keeps your intent, but adds setup, architecture, and practical details). It’s written to match what’s currently in the repository: an n8n workflow + Supabase-backed storage + OpenAI Responses API + transactional email. ([GitHub][1])
-
-````md
 # Competitive Intelligence Newsletter (n8n + Supabase + LLM)
 
 An automated **competitive intelligence → synthesis → email delivery** pipeline built with **n8n**, **Supabase**, and the **OpenAI Responses API**.
